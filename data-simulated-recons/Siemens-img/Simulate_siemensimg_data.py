@@ -35,8 +35,8 @@ obj_arr = np.load('/data/staff/nanomax/reblex/data-simulated-recons/Siemens-img/
 
 fname_probe = '/home/reblex/ptycho_ptypy/ptypy/ptypy/resources/moon.png'
 probe_arr = u.rgb2complex(np.array(Image.open(fname_probe)))
-sim_probe = "/data/staff/nanomax/reblex/data-simulated-recons/NTT_scan_001190/original_recon/NTT_1190_startframe2912_crop256_dist367_defocus980_a0.8_00/dumps/dump_scan_000000_DM_pycuda_1000.ptyr"
-
+sim_probe = "/data/staff/nanomax/reblex/data-simulated-recons/Siemens-img/realistic_probe256.npy"#"/data/staff/nanomax/reblex/data-simulated-recons/NTT_scan_001190/original_recon/NTT_1190_startframe2912_crop256_dist367_defocus980_a0.8_00/dumps/dump_scan_000000_DM_pycuda_1000.ptyr"
+probe = np.load(sim_probe)
 ########## Using a gaussian probe:
 # Copied from https://stackoverflow.com/questions/7687679/how-to-generate-2d-gaussian-with-python
 size = 256
@@ -212,7 +212,6 @@ p.scans.scan_00.illumination.aperture = None
 #####################################################################################################
 # Used for testing:
 #####################################################################################################
-probe = io.h5read(sim_probe, '/content/probe')['/content/probe']['Sscan00G00']['data'][0]
 # Illumination to be used for simulation
 p.scans.scan_00.data.illumination = u.Param()
 p.scans.scan_00.data.illumination.model = probe#_gaussian#"recon"#probe_arr  ## "recon"
