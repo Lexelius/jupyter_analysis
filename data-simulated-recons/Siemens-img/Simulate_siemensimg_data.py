@@ -40,18 +40,18 @@ sim_probe = "/data/staff/nanomax/reblex/data-simulated-recons/NTT_scan_001190/or
 ########## Using a gaussian probe:
 # Copied from https://stackoverflow.com/questions/7687679/how-to-generate-2d-gaussian-with-python
 size = 256
-fwhm = 10
+fwhm = 40
 x = np.arange(0, size, 1, float)
 y = x[:,np.newaxis]
 x0 = y0 = size // 2  # center
-probe_gaussian = 1e-10*np.exp(-4*np.log(2) * ((x-x0)**2 + (y-y0)**2) / fwhm**2)
+probe_gaussian = np.exp(-4*np.log(2) * ((x-x0)**2 + (y-y0)**2) / fwhm**2)
 ##################################
-n_px = 2  # stepsize of scan positions i pixels
+n_px = 10  # stepsize of scan positions i pixels
 
 defocus_um = 980  #
 scannr = 0000
-intensity = 1  #1e5
-sample = f'simg_256px_Au-Si3N4_gauss_ step{n_px}px_r{fwhm}'
+intensity = 1e12  #1e5
+sample = f'simg_256px_Au-Si3N4_step{n_px}px_{intensity:.0e}'
 out_dir0 = f'/data/staff/nanomax/reblex/data-simulated-recons/Siemens-img/simulated_data/{sample}'
 nr = 0
 out_dir = f'{out_dir0}_{nr:02d}/'
@@ -100,7 +100,7 @@ p = u.Param()
 # Set verbose level, can be "interactive", "info" or "debug"
 p.verbose_level = "info"
 
-p.frames_per_block = 1000
+p.frames_per_block = 500
 
 # Basic I/O settings (no files saved in this case)
 p.io = u.Param()
@@ -122,6 +122,7 @@ p.io.autoplot.interval = 10
 p.scans = u.Param()
 p.scans.scan_00 = u.Param()
 p.scans.scan_00.name = 'BlockFull'
+# p.scans.scan_00.name = 'Full'
 p.scans.scan_00.coherence = u.Param()
 p.scans.scan_00.coherence.num_probe_modes = 1
 
@@ -133,16 +134,17 @@ p.scans.scan_00.data.name = 'SimScan'
 p.scans.scan_00.data.energy = 8.0  # 0.7
 p.scans.scan_00.data.distance = 3.670  # 0.072
 p.scans.scan_00.data.psize = 75e-6  # 22e-6
-p.scans.scan_00.data.shape = 256#1024#(2162, 2068) ##512
+p.scans.scan_00.data.shape = size#1024#(2162, 2068) ##512
 p.scans.scan_00.data.save = 'append' ##
 p.scans.scan_00.data.dfile = path_data  ## once all data is collected, save it as .ptyd file
+p.scans.scan_00.data.add_poisson_noise = False
 # p.scans.scan_00.data.detector = 'GenericCCD32bit' ##
 # p.scans.scan_00.data.orientation = (False, True, False)
 
 # Scanning parameters
 p.scans.scan_00.data.xy = u.Param()
-steps = 50
-stepsize = n_px*2.9623827363932297e-08#50e-9
+steps = 20
+stepsize = n_px*1.1849530945572919e-07#2.9623827363932297e-08#50e-9
 # uncomment the 3 lines below to add noise to positions
 # pos__ = xy.spiral_scan(dr=stepsize, r=steps*stepsize/2, maxpts=None)
 # pos__ += np.random.rand(pos__.shape[0],pos__.shape[1])*50e-9 / 3
@@ -154,12 +156,14 @@ p.scans.scan_00.data.xy.steps = steps#50 #2912  # 10
 #### spiral,  spacing = 50e-9,
 # steps:  50    |  40    | 100
 #         1964  |  1257  | 7854
+# You have to explicitly disable extent!
+p.scans.scan_00.data.xy.extent = None
 
 
 # Object to be used for simulation
 p.scans.scan_00.data.sample = u.Param()
 # p.scans.scan_00.data.sample.model = "recon" ##
-p.scans.scan_00.data.sample.model = obj_arr*intensity ##u.rgb2complex(np.array(u.imload(sim_image)))
+p.scans.scan_00.data.sample.model = obj_arr ##u.rgb2complex(np.array(u.imload(sim_image)))
 p.scans.scan_00.data.sample.process = u.Param()
 # p.scans.scan_00.data.sample.process.offset = (0,200)
 # p.scans.scan_00.data.sample.process.zoom = 0.25#0.5
@@ -173,11 +177,13 @@ p.scans.scan_00.data.sample.fill = 1.0+0.j
 # p.scans.scan_00.data.sample.recon.rfile = sim_image  ##
 
 # Detector parameters
-p.scans.scan_00.data.detector = u.Param()
-p.scans.scan_00.data.detector.dtype = np.uint64
-p.scans.scan_00.data.detector.full_well = 2**64-1#2**32-1
-p.scans.scan_00.data.detector.psf = None
+# p.scans.scan_00.data.detector = u.Param()
+# p.scans.scan_00.data.detector.dtype = np.uint64
+# p.scans.scan_00.data.detector.full_well = 2**64-1#2**32-1
+# p.scans.scan_00.data.detector.psf = None
 p.scans.scan_00.data.plot = False #True  ## False
+## No detector. If you use a detector you always get Poisson noise added
+p.scans.scan_00.data.detector = None
 
 ##################################################################################################### Used before testing:
 """
@@ -206,31 +212,32 @@ p.scans.scan_00.illumination.aperture = None
 #####################################################################################################
 # Used for testing:
 #####################################################################################################
+probe = io.h5read(sim_probe, '/content/probe')['/content/probe']['Sscan00G00']['data'][0]
 # Illumination to be used for simulation
 p.scans.scan_00.data.illumination = u.Param()
-p.scans.scan_00.data.illumination.model = probe_gaussian#"recon"#probe_arr  ## "recon"
+p.scans.scan_00.data.illumination.model = probe#_gaussian#"recon"#probe_arr  ## "recon"
 # p.scans.scan_00.data.illumination.recon = u.Param()
 # p.scans.scan_00.data.illumination.recon.rfile = sim_probe
-p.scans.scan_00.data.illumination.photons = 1e11#10e20#9.40e+10#5.9e11  #None  # 1e11 ## could also set around 5.92e+11
-# p.scans.scan_00.data.illumination.aperture = None
-p.scans.scan_00.data.illumination.aperture = u.Param()
-p.scans.scan_00.data.illumination.aperture.form = 'circ'
-p.scans.scan_00.data.illumination.aperture.size = 7.5836928e-05#3*7.6e-05#7.5836928e-05#7.5836928e-06##None
-p.scans.scan_00.data.illumination.propagation = u.Param()
-p.scans.scan_00.data.illumination.propagation.parallel = 1. * defocus_um * 1e-6  # 50e-6
+p.scans.scan_00.data.illumination.photons = intensity#10e20#9.40e+10#5.9e11  #None  # 1e11 ## could also set around 5.92e+11
+p.scans.scan_00.data.illumination.aperture = None
+# p.scans.scan_00.data.illumination.aperture = u.Param()
+# p.scans.scan_00.data.illumination.aperture.form = 'circ'
+# p.scans.scan_00.data.illumination.aperture.size = 7.5836928e-05#3*7.6e-05#7.5836928e-05#7.5836928e-06##None
+# p.scans.scan_00.data.illumination.propagation = u.Param()
+# p.scans.scan_00.data.illumination.propagation.parallel = 1. * defocus_um * 1e-6  # 50e-6
 
 # Initial illumination for reconstruction
 p.scans.scan_00.illumination = u.Param()
-p.scans.scan_00.illumination.model = probe_gaussian#"recon"#probe_arr  # "recon"
+p.scans.scan_00.illumination.model = probe#_gaussian#"recon"#probe_arr  # "recon"
 # p.scans.scan_00.illumination.recon = u.Param()
 # p.scans.scan_00.illumination.recon.rfile = sim_probe
-p.scans.scan_00.illumination.photons = None#9.40e+10#5.9e11 ##None
-# p.scans.scan_00.data.illumination.aperture = None
-p.scans.scan_00.illumination.aperture = u.Param()
-p.scans.scan_00.illumination.aperture.form = 'circ'
-p.scans.scan_00.illumination.aperture.size = 7.5836928e-05#3*7.6e-05##7.5836928e-05#7.5836928e-06##None
-p.scans.scan_00.illumination.propagation = u.Param()
-p.scans.scan_00.illumination.propagation.parallel = 1. * defocus_um * 1e-6  # 50e-6
+# p.scans.scan_00.illumination.photons = None#9.40e+10#5.9e11 ##None
+p.scans.scan_00.illumination.aperture = None
+# p.scans.scan_00.illumination.aperture = u.Param()
+# p.scans.scan_00.illumination.aperture.form = 'circ'
+# p.scans.scan_00.illumination.aperture.size = 7.5836928e-05#3*7.6e-05##7.5836928e-05#7.5836928e-06##None
+# p.scans.scan_00.illumination.propagation = u.Param()
+# p.scans.scan_00.illumination.propagation.parallel = 1. * defocus_um * 1e-6  # 50e-6
 
 
 #####################################################################################################
@@ -245,15 +252,16 @@ p.scans.scan_00.illumination.propagation.parallel = 1. * defocus_um * 1e-6  # 50
 p.engines = u.Param()
 p.engines.engine = u.Param()
 p.engines.engine.name = 'DM_pycuda' #'DM' #'DM_pycuda'
-p.engines.engine.numiter = 1000
-p.engines.engine.numiter_contiguous = 1
+p.engines.engine.numiter = 3000
+# p.engines.engine.numiter_contiguous = 1
 p.engines.engine.alpha = 0.8  # 0.9
-p.engines.engine.clip_object = (0, 1)          # Default = None, Clip object amplitude into this interval
+# p.engines.engine.clip_object = (0, 1)          # Default = None, Clip object amplitude into this interval
 p.engines.engine.probe_support = None
-p.engines.engine.probe_update_start = 1500
+p.engines.engine.probe_update_start = 6500
+p.engines.engine.fourier_relax_factor = 0.0
 
 t0 = time.time()
-P = ptypy.core.Ptycho(p, level=5)
+P = ptypy.core.Ptycho(p, level=5)#, data_type='double')
 dt = time.time() - t0
 print(f'Simulation took {dt // 60} min {dt % 60} sec.')
 # print(f'Simulation took {time.time() - t0} seconds.')
