@@ -39,7 +39,7 @@ start_frame             = 1  #1257
 numitcont               = 1
 divnoise = (0.5, 1.0)
 alpha                   = 0.8#0.75
-sample                  = 'simg'
+sample                  = f'simg_startframe{str(start_frame).ljust(4,"_")}_fpb{str(fpb).ljust(2,"_")}_GTpr-update'
 
 
 ############################################################################
@@ -48,7 +48,7 @@ sample                  = 'simg'
 
 #out_dir0 = f'{beamtime_basedir}/{sample}_fpb{str(fpb).ljust(2,"_")}_startframe{str(start_frame).ljust(4,"_")}_itcont{numitcont}_crop{cropping}{str(f"_posref-{str(do_pos_ref[0])[0]}{str(do_pos_ref[1])[0]}_maxshift{int(maxshift*1e9)}nm_refstart{posref_start}" if any(do_pos_ref) else "")}_dist{int(distance_m*100)}_bin{detector_binning_rec}_defocus{defocus_um}_a{alpha}'
 #out_dir0 = f'{beamtime_basedir}/{sample}_startframe{str(start_frame).ljust(4,"_")}_crop{cropping}_fpb{str(fpb).ljust(2,"_")}_dist{int(distance_m*100)}_defocus{defocus_um}_a{alpha}{str(f"_posref-{str(do_pos_ref[0])[0]}{str(do_pos_ref[1])[0]}_maxshift{int(maxshift*1e9)}nm_refstart{posref_start}" if any(do_pos_ref) else "")}'
-out_dir0 = f'{beamtime_basedir}/{sample}_startframe{str(start_frame).ljust(4,"_")}_fpb{str(fpb).ljust(2,"_")}'
+out_dir0 = f'{beamtime_basedir}/{sample}'
 out_dir = f'{out_dir0}_{scannr:02d}/'
 if not overwrite:
     while os.path.isdir(f'{out_dir0}_{scannr:02d}/'):
@@ -153,7 +153,7 @@ p.scans.scan00.data.rebin = detector_binning_rec  #None
 p.scans.scan00.data.rebin_at_RS = None  #detector_binning_rec
 p.scans.scan00.data.save = 'append'
 p.scans.scan00.data.dfile = path_data  # once all data is collected, save it as .ptyd file
-p.scans.scan00.data.center = None  #(1284, 802)   # center of the diffraction pattern (y,x) in pixel or None -> auto
+p.scans.scan00.data.center = (128,128)#None  #(1284, 802)   # center of the diffraction pattern (y,x) in pixel or None -> auto
 p.scans.scan00.data.auto_center = None
 p.scans.scan00.data.xMotorFlipped = False  # should be opposite to what is used with NanomaxContrast
 p.scans.scan00.data.yMotorFlipped = False  #True  # should be opposite to what is used with NanomaxContrast
@@ -195,7 +195,7 @@ p.engines.engine00.numiter_contiguous = 1
 p.engines.engine00.alpha = alpha
 # p.engines.engine00.clip_object = (0, 1)          # Default = None, Clip object amplitude into this interval
 p.engines.engine00.probe_support = None
-p.engines.engine00.probe_update_start = 6500
+p.engines.engine00.probe_update_start = 2  #6500  # default = 2
 p.engines.engine00.fourier_relax_factor = 0.0
 
 t0 = time.time()

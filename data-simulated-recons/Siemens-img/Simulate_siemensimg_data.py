@@ -130,7 +130,7 @@ p.scans.scan_00.coherence.num_probe_modes = 1
 # using typical values for I08-1 instrument
 p.scans.scan_00.data = u.Param()
 p.scans.scan_00.data.name = 'SimScan'
-# p.scans.scan_00.data.center = (1350, 1250)  ###
+p.scans.scan_00.data.center = (size//2, size//2)#(1350, 1250)  ###
 p.scans.scan_00.data.energy = 8.0  # 0.7
 p.scans.scan_00.data.distance = 3.670  # 0.072
 p.scans.scan_00.data.psize = 75e-6  # 22e-6
