@@ -50,8 +50,8 @@ n_px = 10  # stepsize of scan positions i pixels
 
 defocus_um = 980  #
 scannr = 0000
-intensity = 1e12  #1e5
-sample = f'simg_256px_Au-Si3N4_step{n_px}px_{intensity:.0e}'
+intensity = 1e10  #1e5
+sample = f'simg_256px_Au-Si3N4_step{n_px}px_{intensity:.0e}_poisTRUE_spiral'
 out_dir0 = f'/data/staff/nanomax/reblex/data-simulated-recons/Siemens-img/simulated_data/{sample}'
 nr = 0
 out_dir = f'{out_dir0}_{nr:02d}/'
@@ -137,20 +137,20 @@ p.scans.scan_00.data.psize = 75e-6  # 22e-6
 p.scans.scan_00.data.shape = size#1024#(2162, 2068) ##512
 p.scans.scan_00.data.save = 'append' ##
 p.scans.scan_00.data.dfile = path_data  ## once all data is collected, save it as .ptyd file
-p.scans.scan_00.data.add_poisson_noise = False
+p.scans.scan_00.data.add_poisson_noise = True
 # p.scans.scan_00.data.detector = 'GenericCCD32bit' ##
 # p.scans.scan_00.data.orientation = (False, True, False)
 
 # Scanning parameters
 p.scans.scan_00.data.xy = u.Param()
 steps = 20
-stepsize = n_px*1.1849530945572919e-07#2.9623827363932297e-08#50e-9
+stepsize = n_px*2.9623827363932297e-08#1.1849530945572919e-07#2.9623827363932297e-08#50e-9
 # uncomment the 3 lines below to add noise to positions
 # pos__ = xy.spiral_scan(dr=stepsize, r=steps*stepsize/2, maxpts=None)
 # pos__ += np.random.rand(pos__.shape[0],pos__.shape[1])*50e-9 / 3
 # p.scans.scan_00.data.xy.override = pos__
 ## p.scans.scan_00.data.xy.override = 'spiral'#np.array((-y, x)).T * 1e-6  # "spiral"  # Options: None, ‘round’, ‘raster’, ‘spiral’ or array-like
-p.scans.scan_00.data.xy.model = 'raster'#'spiral'#'raster'
+p.scans.scan_00.data.xy.model = 'spiral'#'spiral'#'raster'
 p.scans.scan_00.data.xy.spacing = stepsize#50e-9
 p.scans.scan_00.data.xy.steps = steps#50 #2912  # 10
 #### spiral,  spacing = 50e-9,
@@ -177,13 +177,13 @@ p.scans.scan_00.data.sample.fill = 1.0+0.j
 # p.scans.scan_00.data.sample.recon.rfile = sim_image  ##
 
 # Detector parameters
-# p.scans.scan_00.data.detector = u.Param()
-# p.scans.scan_00.data.detector.dtype = np.uint64
-# p.scans.scan_00.data.detector.full_well = 2**64-1#2**32-1
-# p.scans.scan_00.data.detector.psf = None
+p.scans.scan_00.data.detector = u.Param()
+p.scans.scan_00.data.detector.dtype = np.uint64
+p.scans.scan_00.data.detector.full_well = 2**64-1#2**32-1
+p.scans.scan_00.data.detector.psf = None
 p.scans.scan_00.data.plot = False #True  ## False
 ## No detector. If you use a detector you always get Poisson noise added
-p.scans.scan_00.data.detector = None
+# p.scans.scan_00.data.detector = None
 
 ##################################################################################################### Used before testing:
 """
@@ -234,7 +234,7 @@ p.scans.scan_00.illumination.model = probe#_gaussian#"recon"#probe_arr  # "recon
 p.scans.scan_00.illumination.aperture = None
 # p.scans.scan_00.illumination.aperture = u.Param()
 # p.scans.scan_00.illumination.aperture.form = 'circ'
-# p.scans.scan_00.illumination.aperture.size = 7.5836928e-05#3*7.6e-05##7.5836928e-05#7.5836928e-06##None
+# p.scans.scan_00.illumination.aperture.size = 256*2.9623827363932297e-08#7.5836928e-05#3*7.6e-05##7.5836928e-05#7.5836928e-06##None
 # p.scans.scan_00.illumination.propagation = u.Param()
 # p.scans.scan_00.illumination.propagation.parallel = 1. * defocus_um * 1e-6  # 50e-6
 
@@ -256,7 +256,7 @@ p.engines.engine.numiter = 3000
 p.engines.engine.alpha = 0.8  # 0.9
 # p.engines.engine.clip_object = (0, 1)          # Default = None, Clip object amplitude into this interval
 p.engines.engine.probe_support = None
-p.engines.engine.probe_update_start = 6500
+p.engines.engine.probe_update_start = 2#6500
 p.engines.engine.fourier_relax_factor = 0.0
 
 t0 = time.time()
