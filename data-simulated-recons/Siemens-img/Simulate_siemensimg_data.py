@@ -18,13 +18,13 @@ Datasets that could be of interest for making data-simulations:
 """
 import ptypy
 import ptypy.utils as u
-from ptypy import io
+#from ptypy import io
 import os
 import numpy as np
 from mpi4py import MPI
 import time
-from PIL import Image
-from ptypy.core import xy
+#from PIL import Image
+#from ptypy.core import xy
 ptypy.load_gpu_engines(arch="cuda")
 ptypy.load_ptyscan_module("livescan") ## Only used for getting the ../ptypy/experiment/ - path.
 
@@ -37,16 +37,17 @@ fname_probe = '/home/reblex/ptycho_ptypy/ptypy/ptypy/resources/moon.png'
 probe_arr = u.rgb2complex(np.array(Image.open(fname_probe)))
 sim_probe = "/data/staff/nanomax/reblex/data-simulated-recons/Siemens-img/realistic_probe256.npy"#"/data/staff/nanomax/reblex/data-simulated-recons/NTT_scan_001190/original_recon/NTT_1190_startframe2912_crop256_dist367_defocus980_a0.8_00/dumps/dump_scan_000000_DM_pycuda_1000.ptyr"
 probe = np.load(sim_probe)
+size = 256 # probe size in px
 ########## Using a gaussian probe:
-# Copied from https://stackoverflow.com/questions/7687679/how-to-generate-2d-gaussian-with-python
-size = 256
-fwhm = 40
-x = np.arange(0, size, 1, float)
-y = x[:,np.newaxis]
-x0 = y0 = size // 2  # center
-probe_gaussian = np.exp(-4*np.log(2) * ((x-x0)**2 + (y-y0)**2) / fwhm**2)
+# # Copied from https://stackoverflow.com/questions/7687679/how-to-generate-2d-gaussian-with-python
+# size = 256
+# fwhm = 40
+# x = np.arange(0, size, 1, float)
+# y = x[:,np.newaxis]
+# x0 = y0 = size // 2  # center
+# probe_gaussian = np.exp(-4*np.log(2) * ((x-x0)**2 + (y-y0)**2) / fwhm**2)
 ##################################
-n_px = 10  # stepsize of scan positions i pixels
+n_px = 19  # stepsize of scan positions i pixels
 
 defocus_um = 980  #
 scannr = 0000
@@ -54,7 +55,6 @@ intensity = 1e10  #1e5
 sample = f'simg_256px_Au-Si3N4_step{n_px}px_{intensity:.0e}_poisTRUE_spiral'
 out_dir0 = f'/data/staff/nanomax/reblex/data-simulated-recons/Siemens-img/simulated_data/{sample}'
 nr = 0
-out_dir = f'{out_dir0}_{nr:02d}/'
 while os.path.isdir(f'{out_dir0}_{nr:02d}/'):
     nr += 1
 out_dir = f'{out_dir0}_{nr:02d}/'
@@ -145,10 +145,14 @@ p.scans.scan_00.data.add_poisson_noise = True
 p.scans.scan_00.data.xy = u.Param()
 steps = 20
 stepsize = n_px*2.9623827363932297e-08#1.1849530945572919e-07#2.9623827363932297e-08#50e-9
-# uncomment the 3 lines below to add noise to positions
+# uncomment the 3 lines below to add noise to spiral positions
 # pos__ = xy.spiral_scan(dr=stepsize, r=steps*stepsize/2, maxpts=None)
 # pos__ += np.random.rand(pos__.shape[0],pos__.shape[1])*50e-9 / 3
 # p.scans.scan_00.data.xy.override = pos__
+# or to add noise to raster positions
+# pos__ = xy.raster_scan(dy=stepsize, dx=stepsize, ny=steps, nx=steps)
+# pos__ += np.random.rand(pos__.shape[0],pos__.shape[1])*stepsize / 3
+# p.scans.scan_00.data.xy.override = -pos__
 ## p.scans.scan_00.data.xy.override = 'spiral'#np.array((-y, x)).T * 1e-6  # "spiral"  # Options: None, ‘round’, ‘raster’, ‘spiral’ or array-like
 p.scans.scan_00.data.xy.model = 'spiral'#'spiral'#'raster'
 p.scans.scan_00.data.xy.spacing = stepsize#50e-9
@@ -251,7 +255,7 @@ p.scans.scan_00.illumination.aperture = None
 p.engines = u.Param()
 p.engines.engine = u.Param()
 p.engines.engine.name = 'DM_pycuda' #'DM' #'DM_pycuda'
-p.engines.engine.numiter = 3000
+p.engines.engine.numiter = 30
 # p.engines.engine.numiter_contiguous = 1
 p.engines.engine.alpha = 0.8  # 0.9
 # p.engines.engine.clip_object = (0, 1)          # Default = None, Clip object amplitude into this interval

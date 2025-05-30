@@ -5,7 +5,7 @@ simulations instead.
 import numpy as np
 from ptypy import io
 import h5py
-sufx = 'simg_256px_Au-Si3N4_step10px_1e+10_poisTRUE_spiral_00'  # Name of the reconstruction-folder created when running "Simulate_siemensimg_data.py"
+sufx = 'simg_256px_Au-Si3N4_step19px_1e+10_poisTRUE_spiral_00'  # Name of the reconstruction-folder created when running "Simulate_siemensimg_data.py"
 
 # Read raw data and simulated data
 basedir = '/data/staff/nanomax/reblex/data-simulated-recons/Siemens-img/simulated_data/'
@@ -34,10 +34,11 @@ h5_mod['entry']['snapshots']['pre_scan']['energy'] = np.array([simdata_energy])
 # hdf5_mod['entry']['measurement']['Eiger']['data'] = simdata_diff
 
 
+# Create new .h5 file with data from h5_raw_fname but with updated entries from the .ptyd file
 io.h5write(basedir + 'sim_files_'+sufx+'/000000.h5', h5_mod)
 print('Done writing h5-data.')
 
-
+# Create new .hdf5 file with data from hdf5_raw_fname but with updated entries from the .ptyd file
 # io.h5write(basedir + 'sim_files/scan_001190_eiger4m.hdf5', hdf5_mod)
 hdf5_raw_f = h5py.File(hdf5_raw_fname, 'r')
 f = h5py.File(basedir + 'sim_files_'+sufx+'/scan_000000_eiger4m.hdf5', 'w')

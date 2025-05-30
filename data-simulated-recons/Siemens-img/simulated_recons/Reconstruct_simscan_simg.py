@@ -21,8 +21,8 @@ print(ptypy.__file__)
 # hard coded user input
 ############################################################################
 
-
-beamtime_basedir        = '/data/staff/nanomax/reblex/data-simulated-recons/Siemens-img/simulated_recons/from_simg_256px_Au-Si3N4_step10px_1e+12_00'  # '/home/reblex/Documents/Reconstructions/NM_scannr_1190'
+n_px=40
+beamtime_basedir        = f'/data/staff/nanomax/reblex/data-simulated-recons/Siemens-img/simulated_recons/from_simg_256px_Au-Si3N4_step{n_px}px_1e+10_poisTRUE_spiral_00'  # '/home/reblex/Documents/Reconstructions/NM_scannr_1190'
 GT_fname                = '/data/staff/nanomax/reblex/data-simulated-recons/Siemens-img/simulated_data/simg_256px_Au-Si3N4_step10px_1e+12_00/data/data_scan_000000.ptyd'
 bgfile                  = None
 scannr                  = 0
@@ -39,7 +39,7 @@ start_frame             = 1  #1257
 numitcont               = 1
 divnoise = (0.5, 1.0)
 alpha                   = 0.8#0.75
-sample                  = f'simg_startframe{str(start_frame).ljust(4,"_")}_fpb{str(fpb).ljust(2,"_")}_GTpr-update'
+sample                  = f'simg_startframe{str(start_frame).ljust(4,"_")}_fpb{str(fpb).ljust(2,"_")}_aperture-pr-update'
 
 
 ############################################################################
@@ -178,10 +178,22 @@ p.scans.scan00.data.frames_per_iter = None ## Load a fixed number of frames in b
 p.scans.scan00.data.load_parallel = None
 
 # Initial illumination for reconstruction
-GT_probe = io.h5read(GT_fname, '/info/illumination')['/info/illumination']
+## initial probe from ground truth:
+# GT_probe = io.h5read(GT_fname, '/info/illumination')['/info/illumination']
+# p.scans.scan00.illumination = u.Param()
+# p.scans.scan00.illumination.model = GT_probe.model
+# p.scans.scan00.illumination.aperture = GT_probe.aperture
+## initial probe from aperture:
 p.scans.scan00.illumination = u.Param()
-p.scans.scan00.illumination.model = GT_probe.model
-p.scans.scan00.illumination.aperture = GT_probe.aperture
+p.scans.scan00.illumination.model = None
+p.scans.scan00.illumination.aperture = u.Param()
+p.scans.scan00.illumination.aperture.form = 'circ'
+p.scans.scan00.illumination.aperture.size = 50e-9
+p.scans.scan00.illumination.propagation = u.Param()
+p.scans.scan00.illumination.propagation.parallel = 1. * defocus_um * 1e-6
+p.scans.scan00.illumination.diversity = u.Param()
+p.scans.scan00.illumination.diversity.noise = divnoise
+p.scans.scan00.illumination.diversity.power = .1
 
 
 #############################################################
@@ -189,12 +201,12 @@ p.scans.scan00.illumination.aperture = GT_probe.aperture
 # Reconstruction parameters
 p.engines = u.Param()
 p.engines.engine00 = u.Param()
-p.engines.engine00.name = 'DM_pycuda' #'DM' #'DM_pycuda'
+p.engines.engine00.name = 'DM_pycuda' #DM_cupy##'DM' #'DM_pycuda'
 p.engines.engine00.numiter = 3000
 p.engines.engine00.numiter_contiguous = 1
 p.engines.engine00.alpha = alpha
 # p.engines.engine00.clip_object = (0, 1)          # Default = None, Clip object amplitude into this interval
-p.engines.engine00.probe_support = None
+p.engines.engine00.probe_support = 3#None
 p.engines.engine00.probe_update_start = 2  #6500  # default = 2
 p.engines.engine00.fourier_relax_factor = 0.0
 
